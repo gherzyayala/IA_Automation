@@ -1,0 +1,243 @@
+{
+  "name": "Preentrega 2 - Captura de leads (principiante)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "captura-lead-demo",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "a1",
+      "name": "Webhook - Nuevo lead",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -660,
+        100
+      ],
+      "webhookId": "captura-lead-demo"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 2
+          },
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "has-contact",
+              "leftValue": "={{ $json.body?.email || $json.body?.telefono || \"\" }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a2",
+      "name": "If - Tiene contacto",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -410,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f1",
+              "name": "nombre",
+              "value": "={{ $json.body?.nombre || \"Sin nombre\" }}",
+              "type": "string"
+            },
+            {
+              "id": "f2",
+              "name": "email",
+              "value": "={{ $json.body?.email || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "f3",
+              "name": "telefono",
+              "value": "={{ $json.body?.telefono || \"\" }}",
+              "type": "string"
+            },
+            {
+              "id": "f4",
+              "name": "canal",
+              "value": "={{ $json.body?.canal || \"web\" }}",
+              "type": "string"
+            },
+            {
+              "id": "f5",
+              "name": "interes",
+              "value": "={{ $json.body?.interes || \"No especificado\" }}",
+              "type": "string"
+            },
+            {
+              "id": "f6",
+              "name": "estado",
+              "value": "Nuevo",
+              "type": "string"
+            },
+            {
+              "id": "f7",
+              "name": "fecha_registro",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "f8",
+              "name": "resultado",
+              "value": "aceptado",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a3",
+      "name": "Edit Fields - Lead válido",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -160,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "a4",
+      "name": "Respond - Aceptado",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        110,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e1",
+              "name": "resultado",
+              "value": "rechazado",
+              "type": "string"
+            },
+            {
+              "id": "e2",
+              "name": "mensaje",
+              "value": "Se requiere email o telefono para registrar el lead.",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a5",
+      "name": "Edit Fields - Error",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -160,
+        220
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "a6",
+      "name": "Respond - Error 400",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        110,
+        220
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook - Nuevo lead": {
+      "main": [
+        [
+          {
+            "node": "If - Tiene contacto",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If - Tiene contacto": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields - Lead válido",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields - Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields - Lead válido": {
+      "main": [
+        [
+          {
+            "node": "Respond - Aceptado",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields - Error": {
+      "main": [
+        [
+          {
+            "node": "Respond - Error 400",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "active": false,
+  "pinData": {},
+  "tags": []
+}
